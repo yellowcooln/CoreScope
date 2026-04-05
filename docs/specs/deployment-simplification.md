@@ -41,7 +41,7 @@ CoreScope deployment today requires:
 An operator who has never seen the codebase should be able to run CoreScope with:
 
 ```bash
-docker run -d -p 80:80 -v corescope-data:/app/data ghcr.io/kpa-clawbot/corescope:latest
+docker run -d -p 80:80 -v corescope-data:/app/data ghcr.io/kpa-clawbot/corescope:v3.4.1
 ```
 
 And see live MeshCore packets from the public mesh within 60 seconds.
@@ -50,7 +50,12 @@ And see live MeshCore packets from the public mesh within 60 seconds.
 
 Publish to **GHCR** (`ghcr.io/kpa-clawbot/corescope`) on every release tag.
 
-- **Tags:** `latest`, `vX.Y.Z`, `vX.Y`, `vX`
+- **Tags:**
+  - `vX.Y.Z` (e.g., `v3.4.1`) — specific release, pinned, recommended for production
+  - `vX.Y` (e.g., `v3.4`) — latest patch in a minor series, auto-updates patches only
+  - `vX` (e.g., `v3`) — latest minor+patch in a major series
+  - `latest` — latest release tag (NOT latest commit). Only moves on tagged releases, never on random master commits. Still, production deployments should pin to `vX.Y.Z`
+  - `edge` — built from master on every push. Unstable, for testing only. Clearly labeled as such
 - **Architectures:** `linux/amd64`, `linux/arm64` (Raspberry Pi 4/5)
 - **Build trigger:** GitHub Actions on `v*` tag push
 - **CI workflow:** New job `publish` after existing `deploy`, uses `docker/build-push-action` with QEMU for multi-arch
@@ -79,7 +84,7 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            ghcr.io/kpa-clawbot/corescope:latest
+            ghcr.io/kpa-clawbot/corescope:v3.4.1
             ghcr.io/kpa-clawbot/corescope:${{ github.ref_name }}
           build-args: |
             APP_VERSION=${{ github.ref_name }}
@@ -124,7 +129,7 @@ A single `docker-compose.yml` with profiles:
 ```yaml
 services:
   corescope:
-    image: ghcr.io/kpa-clawbot/corescope:latest
+    image: ghcr.io/kpa-clawbot/corescope:v3.4.1
     profiles: ["", "standard", "full"]  # runs in all profiles
     ports:
       - "${HTTP_PORT:-80}:80"
@@ -160,7 +165,7 @@ docker run -d --name corescope \
   -p 80:80 \
   -v corescope-data:/app/data \
   -e DISABLE_CADDY=true \
-  ghcr.io/kpa-clawbot/corescope:latest
+  ghcr.io/kpa-clawbot/corescope:v3.4.1
 ```
 
 ### With Docker Compose
@@ -182,7 +187,7 @@ docker compose up -d
 Or for `docker run` users:
 
 ```bash
-docker pull ghcr.io/kpa-clawbot/corescope:latest
+docker pull ghcr.io/kpa-clawbot/corescope:v3.4.1
 docker stop corescope && docker rm corescope
 docker run -d --name corescope ... # same args as before
 ```
@@ -215,7 +220,7 @@ The container ships Caddy. To enable auto-TLS:
      -v corescope-data:/app/data \
      -v caddy-certs:/data/caddy \
      -v ./Caddyfile:/etc/caddy/Caddyfile:ro \
-     ghcr.io/kpa-clawbot/corescope:latest
+     ghcr.io/kpa-clawbot/corescope:v3.4.1
    ```
 
 2. Caddyfile:
@@ -260,7 +265,7 @@ For existing operators using `manage.sh` + build-from-source:
 1. **Keep your data directory** — the bind mount path is the same
 2. **Keep your config.json** — it goes in the data directory as before
 3. **Replace `docker compose build`** with `docker compose pull`
-4. **Update docker-compose.yml** — change `build:` to `image: ghcr.io/kpa-clawbot/corescope:latest`
+4. **Update docker-compose.yml** — change `build:` to `image: ghcr.io/kpa-clawbot/corescope:v3.4.1`
 5. **manage.sh continues to work** — it wraps `docker compose` and will work with pre-built images
 
 **Breaking changes:** None expected. The container interface (ports, volumes, env vars) stays the same.
